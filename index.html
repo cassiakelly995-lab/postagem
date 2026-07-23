@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Prompt — Publicações OAB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2839;
+    --ink-soft:#4A5568;
+    --paper:#F2F1EC;
+    --card:#FBFAF7;
+    --line:#D9D6CC;
+    --maroon:#7A2331;
+    --brass:#8C7A54;
+    --white:#FFFFFF;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:64px 24px 96px;
+  }
+
+  header{
+    margin-bottom:48px;
+    border-top:2px solid var(--ink);
+    border-bottom:1px solid var(--line);
+    padding:28px 0 32px;
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+  }
+
+  .seal{
+    flex:0 0 auto;
+    width:56px;
+    height:56px;
+    border:1.5px solid var(--ink);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    margin-top:4px;
+  }
+
+  .seal::before{
+    content:'';
+    position:absolute;
+    inset:5px;
+    border:1px solid var(--brass);
+    border-radius:50%;
+  }
+
+  .seal span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    color:var(--ink);
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--maroon);
+    margin:0 0 14px;
+  }
+
+  h1{
+    font-family:'Source Serif 4',serif;
+    font-weight:600;
+    font-size:34px;
+    line-height:1.2;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+
+  .lede{
+    font-size:15px;
+    color:var(--ink-soft);
+    max-width:56ch;
+    margin:0;
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:36px;
+    margin-bottom:28px;
+    box-shadow:0 1px 2px rgba(27,40,57,0.04), 0 8px 24px rgba(27,40,57,0.03);
+  }
+
+  .step-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--brass);
+    display:block;
+    margin-bottom:6px;
+  }
+
+  fieldset{
+    border:none;
+    padding:0;
+    margin:0 0 34px;
+  }
+
+  fieldset:last-of-type{margin-bottom:0;}
+
+  legend{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    font-family:'Source Serif 4',serif;
+    font-size:19px;
+    font-weight:600;
+    padding:0 0 10px;
+    margin-bottom:14px;
+    border-bottom:1px solid var(--line);
+    width:100%;
+    color:var(--ink);
+  }
+
+  legend .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:400;
+    color:var(--brass);
+    letter-spacing:0.04em;
+  }
+
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink);
+    margin:16px 0 6px;
+  }
+
+  label .hint{
+    font-weight:400;
+    color:var(--ink-soft);
+    font-size:12px;
+    display:block;
+    margin-top:2px;
+  }
+
+  .field-error{
+    display:none;
+    font-size:12px;
+    color:var(--maroon);
+    margin-top:6px;
+  }
+
+  .field-error.show{display:block;}
+
+  input.invalid,
+  textarea.invalid{
+    border-color:var(--maroon);
+  }
+
+  .char-counter{
+    display:block;
+    text-align:right;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+
+  .char-counter.warn{color:var(--maroon);}
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    color:var(--ink);
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:11px 12px;
+    resize:vertical;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus{
+    outline:2px solid var(--maroon);
+    outline-offset:1px;
+    border-color:var(--maroon);
+  }
+
+  textarea{min-height:90px;}
+
+  .checkbox-row{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin:16px 0 6px;
+  }
+
+  .checkbox-row input{
+    width:auto;
+    margin-top:3px;
+    accent-color:var(--maroon);
+  }
+
+  .checkbox-row label{
+    margin:0;
+  }
+
+  .diretoria-detail{
+    display:none;
+    margin-left:24px;
+    border-left:2px solid var(--line);
+    padding-left:16px;
+    opacity:0;
+    transform:translateY(-4px);
+    transition:opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .diretoria-detail.show{
+    display:block;
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .people-list{margin-top:4px;}
+
+  .person-row{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .person-row input{
+    margin:0;
+  }
+
+  .remove-row{
+    width:38px;
+    height:38px;
+    flex:0 0 auto;
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:2px;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+  }
+
+  .remove-row:hover{
+    border-color:var(--maroon);
+    color:var(--maroon);
+  }
+
+  .add-row{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:2px;
+    background:none;
+    border:1px dashed var(--line);
+    border-radius:2px;
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:9px 14px;
+    cursor:pointer;
+  }
+
+  .add-row:hover{
+    border-color:var(--ink);
+    color:var(--ink);
+    border-style:solid;
+  }
+
+  @media (max-width:560px){
+    .person-row{grid-template-columns:1fr;}
+    .remove-row{width:100%;height:34px;}
+  }
+
+  .limit-note{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:10px;
+  }
+
+  .limit-note strong{color:var(--maroon);font-weight:500;}
+
+  .size-options{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    margin-top:6px;
+  }
+
+  .size-option{
+    position:relative;
+  }
+
+  .size-option input{
+    position:absolute;
+    opacity:0;
+    inset:0;
+    margin:0;
+    cursor:pointer;
+  }
+
+  .size-option label{
+    display:block;
+    margin:0;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:2px;
+    background:var(--white);
+    font-size:13px;
+    cursor:pointer;
+    transition:border-color 0.12s ease, background 0.12s ease;
+  }
+
+  .size-option label .size-title{
+    display:block;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:2px;
+  }
+
+  .size-option label .size-chars{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  .size-option input:checked + label{
+    border-color:var(--maroon);
+    background:#FBF2EF;
+  }
+
+  .size-option input:focus-visible + label{
+    outline:2px solid var(--maroon);
+    outline-offset:1px;
+  }
+
+  @media (max-width:560px){
+    .size-options{grid-template-columns:1fr;}
+  }
+
+  .row-two{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+
+  @media (max-width:560px){
+    .row-two{grid-template-columns:1fr;}
+    .wrap{padding:40px 18px 72px;}
+    h1{font-size:27px;}
+  }
+
+  .btn-row{
+    display:flex;
+    gap:12px;
+  }
+
+  button.primary{
+    flex:1 1 auto;
+    width:100%;
+    background:var(--ink);
+    color:var(--white);
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:0.01em;
+    padding:16px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:background 0.15s ease;
+  }
+
+  button.primary:hover{background:var(--maroon);}
+
+  button.primary:focus-visible{
+    outline:2px solid var(--maroon);
+    outline-offset:2px;
+  }
+
+  button.secondary{
+    flex:0 0 auto;
+    background:var(--white);
+    border:1px solid var(--line);
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:14px;
+    padding:16px 20px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+
+  button.secondary:hover{
+    border-color:var(--ink);
+    color:var(--ink);
+  }
+
+  button.secondary:focus-visible{
+    outline:2px solid var(--ink);
+    outline-offset:2px;
+  }
+
+  @media (max-width:560px){
+    .btn-row{flex-direction:column-reverse;}
+  }
+
+  .output-section{display:none;}
+  .output-section.show{display:block;}
+
+  .output-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+
+  .output-head h2{
+    font-family:'Source Serif 4',serif;
+    font-size:20px;
+    font-weight:600;
+    margin:0;
+  }
+
+  .copy-btn{
+    background:var(--white);
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:500;
+    padding:8px 14px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+
+  .copy-btn:hover{background:var(--ink);color:var(--white);}
+
+  .copy-btn.copied{
+    background:var(--maroon);
+    border-color:var(--maroon);
+    color:var(--white);
+  }
+
+  .code-box{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:24px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    line-height:1.75;
+    color:var(--ink);
+    white-space:pre-wrap;
+    word-break:break-word;
+    max-height:520px;
+    overflow-y:auto;
+  }
+
+  .edit-link{
+    display:inline-block;
+    margin-top:16px;
+    font-size:13px;
+    color:var(--ink-soft);
+    text-decoration:underline;
+    cursor:pointer;
+    background:none;
+    border:none;
+    font-family:'Inter',sans-serif;
+    padding:0;
+  }
+
+  .edit-link:hover{color:var(--maroon);}
+
+  footer{
+    margin-top:48px;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="seal" aria-hidden="true"><span>OAB</span></div>
+    <div>
+      <p class="eyebrow">OAB — Comunicação Institucional</p>
+      <h1>Gerador de prompt para publicações</h1>
+      <p class="lede">Responda às perguntas sobre o evento. Ao final, você recebe um prompt pronto para colar em uma IA, que vai gerar a legenda do Instagram dentro do limite de caracteres da rede, sem inventar informações e sem cara de texto de robô.</p>
+    </div>
+  </header>
+
+  <form id="form-evento">
+
+    <div class="card">
+      <fieldset>
+        <legend><span class="num">01</span> Sobre o evento</legend>
+
+        <label for="titulo">Título do evento
+          <span class="hint">Ex: Solenidade de posse da nova Diretoria</span>
+        </label>
+        <input type="text" id="titulo" aria-describedby="erro-titulo" aria-invalid="false">
+        <span class="field-error" id="erro-titulo" role="alert">Preencha o título do evento.</span>
+
+        <div class="row-two">
+          <div>
+            <label for="data">Data</label>
+            <input type="text" id="data" placeholder="Ex: 22 de julho de 2026" aria-describedby="erro-data" aria-invalid="false">
+            <span class="field-error" id="erro-data" role="alert">Preencha a data.</span>
+          </div>
+          <div>
+            <label for="horario">Horário <span class="hint" style="display:inline">(opcional)</span></label>
+            <input type="text" id="horario" placeholder="Ex: 19h">
+          </div>
+        </div>
+
+        <label for="local">Local
+          <span class="hint">Ex: Auditório da OAB Santana de Parnaíba</span>
+        </label>
+        <input type="text" id="local" aria-describedby="erro-local" aria-invalid="false">
+        <span class="field-error" id="erro-local" role="alert">Preencha o local.</span>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="num">02</span> Presenças</legend>
+
+        <label>Autoridades e advogados presentes
+          <span class="hint">Adicione um por vez. O cargo é opcional. Deixe a lista vazia se não houver.</span>
+        </label>
+        <div class="people-list" id="autoridades-list"></div>
+        <button type="button" class="add-row" data-target="autoridades-list">+ adicionar pessoa</button>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="mencionar-diretoria">
+          <label for="mencionar-diretoria">Mencionar a Diretoria da OAB no texto</label>
+        </div>
+
+        <div class="diretoria-detail" id="diretoria-detail">
+          <label for="diretoria-nome">Nome da Subseção
+            <span class="hint">Ex: OAB Santana de Parnaíba</span>
+          </label>
+          <input type="text" id="diretoria-nome" placeholder="OAB Santana de Parnaíba">
+
+          <label>Nomes da Diretoria a citar <span class="hint" style="display:inline">(opcional — deixe vazio para citar só como "Diretoria")</span></label>
+          <div class="people-list" id="diretoria-list"></div>
+          <button type="button" class="add-row" data-target="diretoria-list">+ adicionar membro</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="num">03</span> O que aconteceu</legend>
+
+        <label for="descricao">Descreva os fatos principais do evento
+          <span class="hint">Só o que realmente aconteceu. Isso evita que a IA invente detalhes.</span>
+        </label>
+        <textarea id="descricao" placeholder="Ex: Encontro reuniu advogados da subseção para discutir pauta de valorização da advocacia e apresentar as ações da gestão para o próximo semestre." aria-describedby="contador-descricao erro-descricao" aria-invalid="false"></textarea>
+        <span class="char-counter" id="contador-descricao">0 de 900 caracteres sugeridos</span>
+        <span class="field-error" id="erro-descricao" role="alert">Descreva o que aconteceu no evento.</span>
+
+        <label for="observacoes">Observações extras <span class="hint" style="display:inline">(opcional)</span></label>
+        <textarea id="observacoes" placeholder="Qualquer outro detalhe relevante que deva constar no texto"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend><span class="num">04</span> Tamanho da legenda</legend>
+
+        <div class="size-options" role="radiogroup" aria-label="Tamanho da legenda">
+          <div class="size-option">
+            <input type="radio" name="tamanho" id="tam-curto" value="curto|280">
+            <label for="tam-curto"><span class="size-title">Curto</span><span class="size-chars">até 280 caracteres</span></label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="tamanho" id="tam-medio" value="médio|900" checked>
+            <label for="tam-medio"><span class="size-title">Médio</span><span class="size-chars">até 900 caracteres</span></label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="tamanho" id="tam-longo" value="longo|1500">
+            <label for="tam-longo"><span class="size-title">Longo</span><span class="size-chars">até 1500 caracteres</span></label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="tamanho" id="tam-maximo" value="máximo|2200">
+            <label for="tam-maximo"><span class="size-title">Máximo</span><span class="size-chars">até 2200 caracteres</span></label>
+          </div>
+        </div>
+        <p class="limit-note">O Instagram corta legendas em <strong>2.200 caracteres</strong>. O prompt sempre instrui a IA a respeitar o limite escolhido.</p>
+      </fieldset>
+    </div>
+
+    <div class="btn-row">
+      <button type="submit" class="primary">Gerar prompt</button>
+      <button type="button" class="secondary" id="limpar-btn">Limpar tudo</button>
+    </div>
+  </form>
+
+  <div class="output-section" id="output-section" aria-live="polite">
+    <div class="output-head">
+      <h2>Prompt gerado</h2>
+      <button class="copy-btn" id="copy-btn" type="button">Copiar</button>
+    </div>
+    <div class="code-box" id="code-box"></div>
+    <button class="edit-link" id="edit-link" type="button">Editar respostas</button>
+  </div>
+
+  <footer>Cole o texto acima em uma IA de sua confiança para gerar a legenda final.</footer>
+</div>
+
+<script>
+  const form = document.getElementById('form-evento');
+  const outputSection = document.getElementById('output-section');
+  const codeBox = document.getElementById('code-box');
+  const copyBtn = document.getElementById('copy-btn');
+  const editLink = document.getElementById('edit-link');
+  const mencionarDiretoria = document.getElementById('mencionar-diretoria');
+  const diretoriaDetail = document.getElementById('diretoria-detail');
+  const limparBtn = document.getElementById('limpar-btn');
+  const localInput = document.getElementById('local');
+  const diretoriaNomeInput = document.getElementById('diretoria-nome');
+
+  mencionarDiretoria.addEventListener('change', () => {
+    diretoriaDetail.classList.toggle('show', mencionarDiretoria.checked);
+  });
+
+  // --- lembrar dados que se repetem entre publicações (local e subseção) ---
+  const MEMORIA_PREFIXO = 'oabGerador_';
+
+  function carregarMemoria() {
+    try {
+      const local = localStorage.getItem(MEMORIA_PREFIXO + 'local');
+      const subsecao = localStorage.getItem(MEMORIA_PREFIXO + 'diretoriaNome');
+      if (local) localInput.value = local;
+      if (subsecao) diretoriaNomeInput.value = subsecao;
+    } catch (err) {
+      // localStorage indisponível (ex: navegação privada) — segue sem memória
+    }
+  }
+
+  function salvarMemoria() {
+    try {
+      localStorage.setItem(MEMORIA_PREFIXO + 'local', localInput.value.trim());
+      localStorage.setItem(MEMORIA_PREFIXO + 'diretoriaNome', diretoriaNomeInput.value.trim());
+    } catch (err) {
+      // segue sem memória se o navegador bloquear
+    }
+  }
+
+  localInput.addEventListener('change', salvarMemoria);
+  diretoriaNomeInput.addEventListener('change', salvarMemoria);
+  carregarMemoria();
+
+  // --- listas de pessoas interativas (autoridades / diretoria) ---
+
+  function criarLinhaPessoa(containerId) {
+    const row = document.createElement('div');
+    row.className = 'person-row';
+    row.innerHTML =
+      '<input type="text" class="person-nome" placeholder="Nome" aria-label="Nome">' +
+      '<input type="text" class="person-cargo" placeholder="Cargo (opcional)" aria-label="Cargo (opcional)">' +
+      '<button type="button" class="remove-row" aria-label="Remover pessoa">&times;</button>';
+
+    row.querySelector('.remove-row').addEventListener('click', () => {
+      row.remove();
+    });
+
+    document.getElementById(containerId).appendChild(row);
+    return row;
+  }
+
+  // Enter em qualquer input de texto do formulário: nunca envia o formulário sem querer.
+  // Nos campos de Nome/Cargo das listas de pessoa, Enter cria uma nova linha automaticamente.
+  form.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    e.preventDefault();
+
+    if (e.target.classList.contains('person-nome') || e.target.classList.contains('person-cargo')) {
+      const containerId = e.target.closest('.people-list').id;
+      const novaLinha = criarLinhaPessoa(containerId);
+      novaLinha.querySelector('.person-nome').focus();
+    }
+  });
+
+  document.querySelectorAll('.add-row').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = criarLinhaPessoa(btn.dataset.target);
+      row.querySelector('.person-nome').focus();
+    });
+  });
+
+  // uma linha inicial em cada lista, pronta para preencher
+  criarLinhaPessoa('autoridades-list');
+  criarLinhaPessoa('diretoria-list');
+
+  function coletarPessoas(containerId) {
+    const linhas = [];
+    document.querySelectorAll('#' + containerId + ' .person-row').forEach(row => {
+      const nome = row.querySelector('.person-nome').value.trim();
+      const cargo = row.querySelector('.person-cargo').value.trim();
+      if (nome) {
+        linhas.push(cargo ? (nome + ' – ' + cargo) : nome);
+      }
+    });
+    return linhas;
+  }
+
+  function formatarLista(linhas) {
+    return linhas.map(l => '- ' + l).join('\n');
+  }
+
+  // --- contador de caracteres ao vivo na descrição, acompanhando o tamanho escolhido ---
+  const descricaoInput = document.getElementById('descricao');
+  const contadorDescricao = document.getElementById('contador-descricao');
+
+  function limiteTamanhoSelecionado() {
+    const selecionado = form.querySelector('input[name="tamanho"]:checked');
+    return selecionado ? parseInt(selecionado.value.split('|')[1], 10) : 900;
+  }
+
+  function atualizarContadorDescricao() {
+    const total = descricaoInput.value.length;
+    const limite = limiteTamanhoSelecionado();
+    contadorDescricao.textContent = total + ' de ' + limite + ' caracteres sugeridos';
+    contadorDescricao.classList.toggle('warn', total > limite);
+  }
+
+  descricaoInput.addEventListener('input', () => {
+    atualizarContadorDescricao();
+    if (descricaoInput.value.trim()) limparErro(descricaoInput, 'erro-descricao');
+  });
+
+  document.querySelectorAll('input[name="tamanho"]').forEach(radio => {
+    radio.addEventListener('change', atualizarContadorDescricao);
+  });
+
+  // --- validação inline, sem depender do alerta padrão do navegador ---
+  function marcarErro(input, erroId) {
+    input.classList.add('invalid');
+    input.setAttribute('aria-invalid', 'true');
+    document.getElementById(erroId).classList.add('show');
+  }
+
+  function limparErro(input, erroId) {
+    input.classList.remove('invalid');
+    input.setAttribute('aria-invalid', 'false');
+    document.getElementById(erroId).classList.remove('show');
+  }
+
+  function validarForm() {
+    const campos = [
+      { input: document.getElementById('titulo'), erroId: 'erro-titulo' },
+      { input: document.getElementById('data'), erroId: 'erro-data' },
+      { input: localInput, erroId: 'erro-local' },
+      { input: descricaoInput, erroId: 'erro-descricao' }
+    ];
+
+    let primeiroInvalido = null;
+
+    campos.forEach(campo => {
+      if (campo.input.value.trim()) {
+        limparErro(campo.input, campo.erroId);
+      } else {
+        marcarErro(campo.input, campo.erroId);
+        if (!primeiroInvalido) primeiroInvalido = campo.input;
+      }
+    });
+
+    if (primeiroInvalido) {
+      primeiroInvalido.focus();
+      primeiroInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+    return true;
+  }
+
+  ['titulo', 'data'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      if (el.value.trim()) limparErro(el, 'erro-' + id);
+    });
+  });
+
+  localInput.addEventListener('input', () => {
+    if (localInput.value.trim()) limparErro(localInput, 'erro-local');
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if (!validarForm()) return;
+
+    salvarMemoria();
+
+    const titulo = document.getElementById('titulo').value.trim();
+    const data = document.getElementById('data').value.trim();
+    const horario = document.getElementById('horario').value.trim();
+    const local = document.getElementById('local').value.trim();
+    const autoridadesLinhas = coletarPessoas('autoridades-list');
+    const descricao = document.getElementById('descricao').value.trim();
+    const observacoes = document.getElementById('observacoes').value.trim();
+
+    const tamanhoInput = form.querySelector('input[name="tamanho"]:checked').value.split('|');
+    const tamanhoLabel = tamanhoInput[0];
+    const tamanhoChars = tamanhoInput[1];
+
+    const autoridadesTexto = autoridadesLinhas.length
+      ? formatarLista(autoridadesLinhas)
+      : 'Nenhuma autoridade específica informada — não cite nomes de autoridades ou advogados no texto.';
+
+    let diretoriaTexto;
+    if (mencionarDiretoria.checked) {
+      const subsecao = document.getElementById('diretoria-nome').value.trim();
+      const membrosLinhas = coletarPessoas('diretoria-list');
+      if (membrosLinhas.length) {
+        diretoriaTexto = 'Mencionar a Diretoria da ' + (subsecao || 'OAB') + ', citando nominalmente:\n' + formatarLista(membrosLinhas);
+      } else {
+        diretoriaTexto = 'Mencionar a Diretoria da ' + (subsecao || 'OAB') + ' de forma institucional, sem citar nomes individuais.';
+      }
+    } else {
+      diretoriaTexto = 'Não mencionar a Diretoria no texto.';
+    }
+
+    const linhasEvento = [
+      'Título: ' + titulo,
+      'Data: ' + data
+    ];
+    if (horario) linhasEvento.push('Horário: ' + horario);
+    linhasEvento.push('Local: ' + local);
+
+    const partes = [];
+
+    partes.push('Escreva o texto para a legenda de uma publicação no Instagram da OAB, seguindo rigorosamente as informações abaixo. Não invente, presuma ou acrescente nenhuma informação que não esteja explicitamente listada aqui.');
+    partes.push('');
+    partes.push('Informações do evento:');
+    partes.push(linhasEvento.join('\n'));
+    partes.push('');
+    partes.push('Autoridades e advogados presentes:');
+    partes.push(autoridadesTexto);
+    partes.push('');
+    partes.push('Diretoria:');
+    partes.push(diretoriaTexto);
+    partes.push('');
+    partes.push('O que aconteceu:');
+    partes.push(descricao);
+
+    if (observacoes) {
+      partes.push('');
+      partes.push('Observações adicionais:');
+      partes.push(observacoes);
+    }
+
+    partes.push('');
+    partes.push('Regras obrigatórias para o texto:');
+    partes.push('- Não utilize asteriscos, hashtags, emojis ou qualquer marcação decorativa.');
+    partes.push('- O texto deve ser sóbrio, institucional e elegante, adequado a uma publicação oficial da OAB.');
+    partes.push('- Não use frases feitas de inteligência artificial nem linguagem que soe artificial, robótica ou exagerada.');
+    partes.push('- Não mencione nenhum nome, cargo, data ou informação que não tenha sido fornecida acima. Se algo não foi informado, simplesmente não mencione o assunto.');
+    partes.push('- IMPORTANTE SOBRE ESPAÇAMENTO: no Instagram, um único Enter entre parágrafos não cria espaço nenhum — o texto aparece colado. Para o texto ficar visualmente separado quando publicado, é obrigatório haver uma linha completamente vazia entre cada parágrafo, ou seja, apertar Enter duas vezes (pular uma linha) antes de começar o parágrafo seguinte. Aplique isso entre TODOS os parágrafos do texto, do primeiro ao último.');
+    partes.push('- Escreva em parágrafos curtos, sem numeração e sem marcadores.');
+    partes.push('- Tamanho do texto: ' + tamanhoLabel + ', com no máximo ' + tamanhoChars + ' caracteres, respeitando o limite de 2.200 caracteres do Instagram.');
+    partes.push('- Entregue apenas o texto pronto para publicação, já com as linhas vazias entre parágrafos aplicadas, sem introduções como "aqui está o texto", sem explicações e sem comentários adicionais.');
+
+    const promptFinal = partes.join('\n');
+
+    codeBox.textContent = promptFinal;
+    outputSection.classList.add('show');
+    copyBtn.textContent = 'Copiar';
+    copyBtn.classList.remove('copied');
+    outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    let copiado = false;
+
+    try {
+      await navigator.clipboard.writeText(codeBox.textContent);
+      copiado = true;
+    } catch (err) {
+      // navegador sem permissão ou sem suporte à Clipboard API — tenta o método antigo
+      try {
+        const range = document.createRange();
+        range.selectNode(codeBox);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        copiado = document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+      } catch (err2) {
+        copiado = false;
+      }
+    }
+
+    if (copiado) {
+      copyBtn.textContent = 'Copiado';
+      copyBtn.classList.add('copied');
+    } else {
+      copyBtn.textContent = 'Selecione e copie (Ctrl+C)';
+    }
+
+    setTimeout(() => {
+      copyBtn.textContent = 'Copiar';
+      copyBtn.classList.remove('copied');
+    }, 2200);
+  });
+
+  editLink.addEventListener('click', () => {
+    outputSection.classList.remove('show');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // --- limpar tudo: reseta o formulário para um evento novo ---
+  limparBtn.addEventListener('click', () => {
+    const temConteudo = document.getElementById('titulo').value.trim()
+      || document.getElementById('data').value.trim()
+      || localInput.value.trim()
+      || descricaoInput.value.trim()
+      || coletarPessoas('autoridades-list').length > 0;
+
+    if (temConteudo && !window.confirm('Limpar tudo? Isso vai apagar as respostas preenchidas neste formulário.')) {
+      return;
+    }
+
+    document.getElementById('titulo').value = '';
+    document.getElementById('data').value = '';
+    document.getElementById('horario').value = '';
+    localInput.value = '';
+    descricaoInput.value = '';
+    document.getElementById('observacoes').value = '';
+    document.getElementById('diretoria-nome').value = '';
+
+    document.getElementById('autoridades-list').innerHTML = '';
+    document.getElementById('diretoria-list').innerHTML = '';
+    criarLinhaPessoa('autoridades-list');
+    criarLinhaPessoa('diretoria-list');
+
+    mencionarDiretoria.checked = false;
+    diretoriaDetail.classList.remove('show');
+
+    document.getElementById('tam-medio').checked = true;
+
+    atualizarContadorDescricao();
+
+    ['titulo', 'data', 'local', 'descricao'].forEach(id => {
+      limparErro(document.getElementById(id), 'erro-' + id);
+    });
+
+    outputSection.classList.remove('show');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('titulo').focus();
+  });
+
+</script>
+</body>
+</html>
